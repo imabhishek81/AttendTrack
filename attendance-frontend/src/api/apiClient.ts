@@ -202,12 +202,45 @@ export const api = {
     return request<ApiSubjectStats>(`/subjects/${id}?required=${required}`);
   },
 
+  async createSubject(semesterId = 1, subject: { name: string; code: string; teacher: string; color: string }): Promise<ApiSubject> {
+    return request<ApiSubject>(`/subjects?semesterId=${semesterId}`, {
+      method: 'POST',
+      body: JSON.stringify(subject),
+    });
+  },
+
+  async updateSubject(id: number, subject: { name: string; code: string; teacher: string; color: string }): Promise<ApiSubject> {
+    return request<ApiSubject>(`/subjects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(subject),
+    });
+  },
+
+  async deleteSubject(id: number): Promise<void> {
+    return request<void>(`/subjects/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // ─── Timetable ──────────────────────────
   async getTimetable(semesterId = 1, day?: string): Promise<ApiTimetableEntry[]> {
     const query = day 
       ? `/timetable?semesterId=${semesterId}&day=${encodeURIComponent(day)}`
       : `/timetable?semesterId=${semesterId}`;
     return request<ApiTimetableEntry[]>(query);
+  },
+
+  async addTimetableEntry(subjectId: number, entry: { day: string; startTime: string; endTime: string; room: string }): Promise<ApiTimetableEntry> {
+    return request<ApiTimetableEntry>(`/timetable?subjectId=${subjectId}`, {
+      method: 'POST',
+      body: JSON.stringify(entry),
+    });
+  },
+
+  async deleteTimetableEntry(id: number): Promise<void> {
+    return request<void>(`/timetable/${id}`, {
+      method: 'DELETE',
+    });
   },
 
   // ─── Attendance ─────────────────────────
