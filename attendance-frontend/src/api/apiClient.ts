@@ -24,10 +24,9 @@ function resolveApiBaseUrl(): string {
   // 2. Dynamic host detection for Render, Localtunnel, LAN, Localhost
   if (typeof window !== 'undefined' && window.location.hostname) {
     const host = window.location.hostname;
-    // Auto-detect Render deployment (e.g. attendtrack-frontend.onrender.com -> attendtrack-backend.onrender.com)
-    if (host.includes('onrender.com')) {
-      const backendHost = host.replace('-frontend', '-backend');
-      return `https://${backendHost}/api`;
+    // Cloud Render deployment
+    if (host.includes('onrender.com') || host.includes('vercel.app') || host.includes('netlify.app')) {
+      return 'https://attendtrack-backend-fidd.onrender.com/api';
     }
     // Auto-detect localtunnel
     if (host.includes('loca.lt')) {
