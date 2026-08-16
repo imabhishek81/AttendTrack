@@ -73,7 +73,7 @@ function App() {
       return mockUser;
     }
   });
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(mockAttendance);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [requiredAttendance, setRequiredAttendance] = useState(75);
 
   const triggerRefresh = useCallback(() => {

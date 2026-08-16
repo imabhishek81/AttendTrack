@@ -43,7 +43,7 @@ export default function CalendarPage() {
   }, [year, month]);
 
   const effectiveRecords = useMemo(() => {
-    if (liveCalendarRecords && liveCalendarRecords.length > 0) {
+    if (liveCalendarRecords) {
       return liveCalendarRecords.map(r => ({
         id: String(r.id),
         subjectId: String(r.subject.id),
@@ -60,18 +60,8 @@ export default function CalendarPage() {
       }));
     }
 
-    return attendanceRecords.map(record => ({
-      ...record,
-      subject: mockSubjects.find(s => s.id === record.subjectId) || {
-        id: record.subjectId,
-        semesterId: '1',
-        name: 'Subject',
-        code: 'SUB',
-        teacher: 'Prof.',
-        color: '#6366f1',
-      },
-    }));
-  }, [liveCalendarRecords, attendanceRecords]);
+    return [];
+  }, [liveCalendarRecords]);
 
   const dateAttendanceMap = useMemo(() => {
     const map: Record<string, { present: number; absent: number; total: number }> = {};

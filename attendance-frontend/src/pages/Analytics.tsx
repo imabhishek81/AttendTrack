@@ -8,16 +8,27 @@ import {
   Area, AreaChart
 } from 'recharts';
 import { BarChart3, TrendingUp, PieChart as PieChartIcon, Calendar } from 'lucide-react';
-import { api, ApiSubjectStats } from '../api/apiClient';
+import { api, ApiSubjectStats, ApiAttendanceRecord } from '../api/apiClient';
 
 const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#06b6d4'];
 
 export default function Analytics() {
-  const { attendanceRecords, requiredAttendance, refreshTrigger } = useAppContext();
+  const { requiredAttendance, refreshTrigger } = useAppContext();
   const [liveSubjects, setLiveSubjects] = useState<ApiSubjectStats[] | null>(null);
+  const [liveCalendarRecords, setLiveCalendarRecords] = useState<ApiAttendanceRecord[] | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    const now = new Date();
+    const startDate = `${now.getFullYear()}-01-01`;
+    const endDate = `${now.getFullYear()}-12-31`;
+
+    api.getCalendar(1, startDate, endDate)
+      .then(data => {
+        if (isMounted) setLiveCalendarRecords(data);
+      })
+      .catch(err => console.warn('Could not fetch calendar for analytics:', err));
+
     api.getSubjects(1, requiredAttendance)
       .then(data => {
         if (isMounted) setLiveSubjects(data);
@@ -28,7 +39,7 @@ export default function Analytics() {
 
   // Subject-wise data for bar chart
   const subjectData = useMemo(() => {
-    if (liveSubjects && liveSubjects.length > 0) {
+    if (liveSubjects) {
       return liveSubjects.map(s => ({
         name: s.subject.code,
         percentage: Math.round(s.percentage * 10) / 10,
@@ -38,29 +49,16 @@ export default function Analytics() {
         fill: s.subject.color,
       }));
     }
-
-    return mockSubjects.map(subject => {
-      const records = attendanceRecords.filter(r => r.subjectId === subject.id);
-      const present = records.filter(r => r.status === 'PRESENT').length;
-      const total = records.length;
-      const percentage = calculatePercentage(present, total);
-      return {
-        name: subject.code,
-        percentage: Math.round(percentage * 10) / 10,
-        present,
-        absent: total - present,
-        total,
-        fill: subject.color,
-      };
-    });
-  }, [liveSubjects, attendanceRecords]);
+    return [];
+  }, [liveSubjects]);
 
   // Monthly trend data
   const monthlyData = useMemo(() => {
+    const records = liveCalendarRecords || [];
     const months: Record<string, { present: number; total: number }> = {};
     
-    attendanceRecords.forEach(record => {
-      const monthKey = record.date.substring(0, 7); // "2026-06"
+    records.forEach(record => {
+      const monthKey = record.date.substring(0, 7); // "2026-08"
       if (!months[monthKey]) months[monthKey] = { present: 0, total: 0 };
       months[monthKey].total++;
       if (record.status === 'PRESENT') months[monthKey].present++;
@@ -77,23 +75,17 @@ export default function Analytics() {
           total: data.total,
         };
       });
-  }, [attendanceRecords]);
+  }, [liveCalendarRecords]);
 
   // Overall pie chart data
   const pieData = useMemo(() => {
-    const present = attendanceRecords.filter(r => r.status === 'PRESENT').length;
-    const absent = attendanceRecords.filter(r => r.status === 'ABSENT').length;
+    const present = (liveSubjects || []).reduce((sum, s) => sum + s.present, 0);
+    const absent = (liveSubjects || []).reduce((sum, s) => sum + s.absent, 0);
     return [
       { name: 'Present', value: present, color: '#10b981' },
       { name: 'Absent', value: absent, color: '#ef4444' },
     ];
-  }, [attendanceRecords]);
-
-  // Overall stats
-  const overallPercentage = useMemo(() => {
-    const present = attendanceRecords.filter(r => r.status === 'PRESENT').length;
-    return calculatePercentage(present, attendanceRecords.length);
-  }, [attendanceRecords]);
+  }, [liveSubjects]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
@@ -264,8 +256,8 @@ export default function Analytics() {
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center">
               {[1, 3, 5, 10].map(n => {
-                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0) || attendanceRecords.filter(r => r.status === 'PRESENT').length;
-                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0) || attendanceRecords.length;
+                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0);
+                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0);
                 const projected = totalC + n > 0 ? ((totalP + n) / (totalC + n)) * 100 : 0;
                 return (
                   <div key={n} className="p-2.5 rounded-lg bg-surface-900/60 border border-emerald-500/10">
@@ -284,8 +276,8 @@ export default function Analytics() {
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center">
               {[1, 2, 3, 5].map(n => {
-                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0) || attendanceRecords.filter(r => r.status === 'PRESENT').length;
-                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0) || attendanceRecords.length;
+                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0);
+                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0);
                 const projected = totalC + n > 0 ? (totalP / (totalC + n)) * 100 : 0;
                 const isSafe = projected >= requiredAttendance;
                 return (

@@ -99,7 +99,7 @@ export default function Timetable() {
   };
 
   const dayClasses = useMemo(() => {
-    if (liveTimetable && liveTimetable.length > 0) {
+    if (liveTimetable) {
       return liveTimetable
         .filter(t => t.day === selectedDay)
         .sort((a, b) => a.startTime.localeCompare(b.startTime))
@@ -121,18 +121,7 @@ export default function Timetable() {
         }));
     }
 
-    return mockTimetable
-      .filter(t => t.day === selectedDay)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-      .map(entry => ({
-        id: Number(entry.id),
-        subjectId: Number(entry.subjectId),
-        day: entry.day,
-        startTime: entry.startTime,
-        endTime: entry.endTime,
-        room: entry.room,
-        subject: mockSubjects.find(s => s.id === entry.subjectId)!,
-      }));
+    return [];
   }, [liveTimetable, selectedDay]);
 
   return (
