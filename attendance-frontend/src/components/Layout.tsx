@@ -39,17 +39,6 @@ export default function Layout() {
           </div>
         </div>
 
-        {/* Backend status pill */}
-        <div className="mb-5 px-3 py-1.5 rounded-xl bg-surface-900/60 border border-surface-700/40 flex items-center justify-between text-[11px]">
-          <span className="text-surface-400 font-medium">Spring Boot API</span>
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${backendConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className={backendConnected ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-medium'}>
-              {backendConnected ? 'Live :8080' : 'Offline'}
-            </span>
-          </div>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 space-y-1">
           <p className="text-[10px] text-surface-600 font-semibold uppercase tracking-wider px-4 mb-3">Menu</p>
