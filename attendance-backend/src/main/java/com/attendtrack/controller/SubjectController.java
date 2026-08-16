@@ -1,5 +1,6 @@
 package com.attendtrack.controller;
 
+import com.attendtrack.dto.CreateSubjectRequestDTO;
 import com.attendtrack.dto.SubjectStatsDTO;
 import com.attendtrack.entity.Subject;
 import com.attendtrack.service.SubjectService;
@@ -47,8 +48,9 @@ public class SubjectController {
     @PostMapping
     public ResponseEntity<Subject> createSubject(
             @RequestParam(name = "semesterId", defaultValue = "1") Long semesterId,
-            @RequestBody Subject subject) {
-        Subject created = subjectService.createSubject(semesterId, subject);
+            @RequestBody CreateSubjectRequestDTO request) {
+        Subject subject = request.toSubject();
+        Subject created = subjectService.createSubject(semesterId, subject, request.getInitialTotal(), request.getInitialAttended());
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 

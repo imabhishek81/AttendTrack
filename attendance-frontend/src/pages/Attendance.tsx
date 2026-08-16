@@ -39,6 +39,8 @@ export default function AttendancePage() {
   const [modalError, setModalError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'SAFE' | 'WARNING' | 'DANGER'>('ALL');
+  const [initialTotal, setInitialTotal] = useState<string>('');
+  const [initialAttended, setInitialAttended] = useState<string>('');
 
   const loadSubjects = useCallback(async () => {
     try {
@@ -59,6 +61,8 @@ export default function AttendancePage() {
     setSubjectCode('');
     setSubjectTeacher('');
     setSubjectColor(PRESET_COLORS[0]);
+    setInitialTotal('');
+    setInitialAttended('');
     setModalError('');
     setIsSubjectModalOpen(true);
   };
@@ -94,12 +98,16 @@ export default function AttendancePage() {
           color: subjectColor,
         });
       } else {
-        // Create new subject
+        // Create new subject with optional past historical data
+        const totalNum = initialTotal.trim() ? parseInt(initialTotal, 10) : undefined;
+        const attendedNum = initialAttended.trim() ? parseInt(initialAttended, 10) : undefined;
         await api.createSubject(1, {
           name: subjectName.trim(),
           code: subjectCode.trim().toUpperCase(),
           teacher: subjectTeacher.trim() || 'Prof. TBD',
           color: subjectColor,
+          initialTotal: totalNum,
+          initialAttended: attendedNum,
         });
       }
 
@@ -506,6 +514,54 @@ export default function AttendancePage() {
                   ))}
                 </div>
               </div>
+
+              {/* Optional Past Attendance Data (Semester already started) */}
+              {!editingSubjectId && (
+                <div className="p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/15 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                      <span>🗓️</span> Past Attendance Data (Optional)
+                    </span>
+                    <span className="text-[10px] text-surface-400 font-medium">e.g. Started July 1</span>
+                  </div>
+                  <p className="text-[11px] text-surface-400 leading-relaxed">
+                    If this subject has already started, enter past lectures held and attended so far:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                    <div>
+                      <label className="block text-[11px] font-medium text-surface-300 mb-1">Lectures Conducted</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={initialTotal}
+                        onChange={e => setInitialTotal(e.target.value)}
+                        placeholder="e.g. 24"
+                        className="input-field py-2 text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-surface-300 mb-1">Lectures Attended</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={initialTotal ? Number(initialTotal) : undefined}
+                        value={initialAttended}
+                        onChange={e => setInitialAttended(e.target.value)}
+                        placeholder="e.g. 20"
+                        className="input-field py-2 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                  {initialTotal && Number(initialTotal) > 0 && (
+                    <div className="pt-1.5 flex items-center justify-between text-xs border-t border-indigo-500/10">
+                      <span className="text-surface-400">Starting Attendance:</span>
+                      <span className="font-bold text-emerald-400 font-mono">
+                        {((Number(initialAttended || 0) / Number(initialTotal)) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {modalError && (
                 <div className="text-xs text-red-400 bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">

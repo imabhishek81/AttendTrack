@@ -1,6 +1,7 @@
 package com.attendtrack.service;
 
 import com.attendtrack.dto.SubjectStatsDTO;
+import com.attendtrack.entity.AttendanceRecord;
 import com.attendtrack.entity.AttendanceStatus;
 import com.attendtrack.entity.Semester;
 import com.attendtrack.entity.Subject;
@@ -12,6 +13,8 @@ import com.attendtrack.repository.TimetableRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,10 +73,40 @@ public class SubjectService {
 
     @Transactional
     public Subject createSubject(Long semesterId, Subject subjectData) {
+        return createSubject(semesterId, subjectData, null, null);
+    }
+
+    @Transactional
+    public Subject createSubject(Long semesterId, Subject subjectData, Integer initialTotal, Integer initialAttended) {
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + semesterId));
         subjectData.setSemester(semester);
-        return subjectRepository.save(subjectData);
+        Subject saved = subjectRepository.save(subjectData);
+
+        // Seed historical attendance data if student already has past lectures
+        if (initialTotal != null && initialTotal > 0) {
+            int total = initialTotal;
+            int attended = (initialAttended != null && initialAttended >= 0) ? Math.min(initialAttended, total) : 0;
+            int missed = total - attended;
+
+            List<AttendanceRecord> records = new ArrayList<>();
+            LocalDate baseDate = LocalDate.now();
+            int dayOffset = 1;
+
+            // Seed attended past lectures
+            for (int i = 0; i < attended; i++) {
+                records.add(new AttendanceRecord(saved, baseDate.minusDays(dayOffset), AttendanceStatus.PRESENT));
+                dayOffset++;
+            }
+            // Seed missed past lectures
+            for (int i = 0; i < missed; i++) {
+                records.add(new AttendanceRecord(saved, baseDate.minusDays(dayOffset), AttendanceStatus.ABSENT));
+                dayOffset++;
+            }
+            attendanceRepository.saveAll(records);
+        }
+
+        return saved;
     }
 
     @Transactional

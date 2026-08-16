@@ -227,7 +227,7 @@ export const api = {
     return request<ApiSubjectStats>(`/subjects/${id}?required=${required}`);
   },
 
-  async createSubject(semesterId = 1, subject: { name: string; code: string; teacher: string; color: string }): Promise<ApiSubject> {
+  async createSubject(semesterId = 1, subject: { name: string; code: string; teacher: string; color: string; initialTotal?: number; initialAttended?: number }): Promise<ApiSubject> {
     return request<ApiSubject>(`/subjects?semesterId=${semesterId}`, {
       method: 'POST',
       body: JSON.stringify(subject),
