@@ -1,7 +1,7 @@
 // ==========================================
 // AttendTrack Progressive Web App Service Worker
 // ==========================================
-const CACHE_NAME = 'attendtrack-v1';
+const CACHE_NAME = 'attendtrack-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
