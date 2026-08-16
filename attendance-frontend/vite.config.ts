@@ -8,5 +8,6 @@ export default defineConfig({
     host: '0.0.0.0', // Listen on all network interfaces for phone access
     port: 5173,
     open: false,
+    allowedHosts: true, // Allow localtunnel, ngrok, and all public tunnels
   },
 });
