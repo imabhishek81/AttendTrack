@@ -1,9 +1,13 @@
 package com.attendtrack.controller;
 
 import com.attendtrack.dto.DashboardResponseDTO;
+import com.attendtrack.entity.User;
+import com.attendtrack.repository.UserRepository;
 import com.attendtrack.service.DashboardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 /**
  * ==========================================================
@@ -21,9 +25,11 @@ import org.springframework.web.bind.annotation.*;
 public class DashboardController {
 
     private final DashboardService dashboardService;
+    private final UserRepository userRepository;
 
-    public DashboardController(DashboardService dashboardService) {
+    public DashboardController(DashboardService dashboardService, UserRepository userRepository) {
         this.dashboardService = dashboardService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -32,8 +38,18 @@ public class DashboardController {
      */
     @GetMapping
     public ResponseEntity<DashboardResponseDTO> getDashboard(
-            @RequestParam(name = "userId", defaultValue = "1") Long userId) {
-        DashboardResponseDTO response = dashboardService.getDashboardData(userId);
+            @RequestParam(name = "userId", required = false) Long userId,
+            Principal principal) {
+        Long targetUserId = userId;
+        if (principal != null && principal.getName() != null) {
+            targetUserId = userRepository.findByEmail(principal.getName())
+                    .map(User::getId)
+                    .orElse(targetUserId != null ? targetUserId : 1L);
+        } else if (targetUserId == null) {
+            targetUserId = 1L;
+        }
+
+        DashboardResponseDTO response = dashboardService.getDashboardData(targetUserId);
         return ResponseEntity.ok(response);
     }
 }
