@@ -273,18 +273,6 @@ export default function Settings() {
             <span>Save Profile</span>
           </button>
         </form>
-
-        {/* Spring Boot Learning Tip */}
-        <div className="mt-5 p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-surface-400 leading-relaxed">
-            <span className="font-semibold text-indigo-300">🎓 Spring Boot Backend Note:</span> In Stage 3/5, avatar uploads are handled via Spring's <code className="text-indigo-300 bg-surface-800 px-1 py-0.5 rounded">MultipartFile</code>:
-            <br />
-            <code className="text-surface-300 font-mono text-[11px] block mt-1">
-              @PostMapping("/api/user/avatar") public ResponseEntity&lt;String&gt; uploadAvatar(@RequestParam("file") MultipartFile file)
-            </code>
-          </div>
-        </div>
       </div>
 
       {/* ─── Attendance Settings ────────── */}
