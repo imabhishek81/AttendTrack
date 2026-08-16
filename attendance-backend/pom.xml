@@ -42,6 +42,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- PostgreSQL JDBC Driver (for Render.com native cloud DB) -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- H2 In-Memory DB (Convenient fallback / testing) -->
 		<dependency>
 			<groupId>com.h2database</groupId>
