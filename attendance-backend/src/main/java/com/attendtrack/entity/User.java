@@ -29,7 +29,6 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String avatarUrl;
 
