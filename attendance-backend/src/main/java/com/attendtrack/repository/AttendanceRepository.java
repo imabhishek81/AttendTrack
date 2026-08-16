@@ -31,4 +31,7 @@ public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Lo
     
     // Total count for a subject
     long countBySubjectId(Long subjectId);
+
+    // Delete records for a subject (for cascade cleanup)
+    void deleteBySubjectId(Long subjectId);
 }

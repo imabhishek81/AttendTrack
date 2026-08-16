@@ -8,6 +8,7 @@ import com.attendtrack.exception.ResourceNotFoundException;
 import com.attendtrack.repository.AttendanceRepository;
 import com.attendtrack.repository.SemesterRepository;
 import com.attendtrack.repository.SubjectRepository;
+import com.attendtrack.repository.TimetableRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
     private final SemesterRepository semesterRepository;
     private final AttendanceRepository attendanceRepository;
+    private final TimetableRepository timetableRepository;
     private final AttendanceCalculationService calculationService;
 
     // Constructor Injection (Best Practice in Spring Boot!)
@@ -27,10 +29,12 @@ public class SubjectService {
             SubjectRepository subjectRepository,
             SemesterRepository semesterRepository,
             AttendanceRepository attendanceRepository,
+            TimetableRepository timetableRepository,
             AttendanceCalculationService calculationService) {
         this.subjectRepository = subjectRepository;
         this.semesterRepository = semesterRepository;
         this.attendanceRepository = attendanceRepository;
+        this.timetableRepository = timetableRepository;
         this.calculationService = calculationService;
     }
 
@@ -89,6 +93,11 @@ public class SubjectService {
         if (!subjectRepository.existsById(id)) {
             throw new ResourceNotFoundException("Subject not found with id: " + id);
         }
+        // 1. Delete associated attendance records first
+        attendanceRepository.deleteBySubjectId(id);
+        // 2. Delete associated timetable entries first
+        timetableRepository.deleteBySubjectId(id);
+        // 3. Delete the subject itself
         subjectRepository.deleteById(id);
     }
 }
