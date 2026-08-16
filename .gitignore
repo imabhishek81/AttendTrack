@@ -1,0 +1,31 @@
+# ==========================================
+# Git Ignore for AttendTrack Full-Stack
+# ==========================================
+
+# Node / Frontend
+node_modules/
+attendance-frontend/node_modules/
+attendance-frontend/dist/
+attendance-frontend/.env.local
+attendance-frontend/.env.*.local
+
+# Java / Maven Backend
+target/
+attendance-backend/target/
+*.class
+*.jar
+*.war
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

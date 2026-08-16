@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # ─── 1. MySQL 8 Database ──────────────────
+  mysql-db:
+    image: mysql:8.0
+    container_name: attendtrack-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: attendance_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - attendtrack-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── 2. Spring Boot 3 Backend ─────────────
+  backend:
+    build:
+      context: ./attendance-backend
+      dockerfile: Dockerfile
+    container_name: attendtrack-backend
+    restart: unless-stopped
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/attendance_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - attendtrack-network
+
+  # ─── 3. React PWA Frontend ────────────────
+  frontend:
+    build:
+      context: ./attendance-frontend
+      dockerfile: Dockerfile
+    container_name: attendtrack-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks:
+      - attendtrack-network
+    depends_on:
+      - backend
+
+networks:
+  attendtrack-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
