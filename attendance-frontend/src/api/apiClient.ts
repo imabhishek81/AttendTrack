@@ -7,14 +7,40 @@
 //   Authorization: Bearer eyJhbGciOi...
 // ==========================================
 
-const PUBLIC_BACKEND_TUNNEL = 'https://dull-grapes-see.loca.lt/api';
+function resolveApiBaseUrl(): string {
+  // 1. Check VITE_API_URL from environment
+  let envUrl = (import.meta as any)?.env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
+    envUrl = envUrl.trim();
+    if (!envUrl.startsWith('http://') && !envUrl.startsWith('https://')) {
+      envUrl = `https://${envUrl}`;
+    }
+    if (!envUrl.endsWith('/api')) {
+      envUrl = `${envUrl.replace(/\/+$/, '')}/api`;
+    }
+    return envUrl;
+  }
 
-const API_BASE_URL = ((import.meta as any)?.env?.VITE_API_URL) || 
-  (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')
-    ? PUBLIC_BACKEND_TUNNEL
-    : (typeof window !== 'undefined' && window.location.hostname
-        ? `${window.location.protocol}//${window.location.hostname}:8080/api`
-        : 'http://localhost:8080/api'));
+  // 2. Dynamic host detection for Render, Localtunnel, LAN, Localhost
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    const host = window.location.hostname;
+    // Auto-detect Render deployment (e.g. attendtrack-frontend.onrender.com -> attendtrack-backend.onrender.com)
+    if (host.includes('onrender.com')) {
+      const backendHost = host.replace('-frontend', '-backend');
+      return `https://${backendHost}/api`;
+    }
+    // Auto-detect localtunnel
+    if (host.includes('loca.lt')) {
+      return 'https://dull-grapes-see.loca.lt/api';
+    }
+    // Local Wi-Fi / localhost
+    return `${window.location.protocol}//${host}:8080/api`;
+  }
+
+  return 'http://localhost:8080/api';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const TOKEN_KEY = 'attendtrack_jwt';
 
 export interface ApiUser {
