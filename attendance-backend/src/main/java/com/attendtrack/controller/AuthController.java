@@ -76,20 +76,11 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user = userRepository.save(user);
 
-        // 2. Create default semester
+        // 2. Create default active semester (0 subjects by default)
         Semester semester = new Semester(user, "5th Semester", "2026-27", 75.0);
         semester = semesterRepository.save(semester);
 
-        // 3. Create starter subjects
-        subjectRepository.saveAll(List.of(
-                new Subject(semester, "Database Management System", "DBMS", "Prof. Sharma", "#6366f1"),
-                new Subject(semester, "Java Programming", "Java", "Prof. Patel", "#f59e0b"),
-                new Subject(semester, "Software Engineering", "SE", "Prof. Gupta", "#10b981"),
-                new Subject(semester, "Internet of Things", "IoT", "Prof. Kumar", "#ec4899"),
-                new Subject(semester, "Computer Networks", "CN", "Prof. Singh", "#06b6d4")
-        ));
-
-        // 4. Generate JWT token
+        // 3. Generate JWT token
         String token = tokenProvider.generateToken(user.getEmail(), user.getId());
 
         // Don't send back password hash in response

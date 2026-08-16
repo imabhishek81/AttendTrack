@@ -2,12 +2,16 @@ package com.attendtrack.controller;
 
 import com.attendtrack.dto.CreateSubjectRequestDTO;
 import com.attendtrack.dto.SubjectStatsDTO;
+import com.attendtrack.entity.Semester;
 import com.attendtrack.entity.Subject;
+import com.attendtrack.repository.SemesterRepository;
+import com.attendtrack.repository.UserRepository;
 import com.attendtrack.service.SubjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -15,9 +19,26 @@ import java.util.List;
 public class SubjectController {
 
     private final SubjectService subjectService;
+    private final UserRepository userRepository;
+    private final SemesterRepository semesterRepository;
 
-    public SubjectController(SubjectService subjectService) {
+    public SubjectController(
+            SubjectService subjectService,
+            UserRepository userRepository,
+            SemesterRepository semesterRepository) {
         this.subjectService = subjectService;
+        this.userRepository = userRepository;
+        this.semesterRepository = semesterRepository;
+    }
+
+    private Long resolveSemesterId(Long semesterId, Principal principal) {
+        if (principal != null && principal.getName() != null) {
+            return userRepository.findByEmail(principal.getName())
+                    .flatMap(user -> semesterRepository.findFirstByUserIdOrderByIdDesc(user.getId()))
+                    .map(Semester::getId)
+                    .orElse(semesterId != null ? semesterId : 1L);
+        }
+        return semesterId != null ? semesterId : 1L;
     }
 
     /**
@@ -25,9 +46,11 @@ public class SubjectController {
      */
     @GetMapping
     public ResponseEntity<List<SubjectStatsDTO>> getAllSubjects(
-            @RequestParam(name = "semesterId", defaultValue = "1") Long semesterId,
-            @RequestParam(name = "required", defaultValue = "75.0") double requiredAttendance) {
-        List<SubjectStatsDTO> list = subjectService.getAllSubjectStats(semesterId, requiredAttendance);
+            @RequestParam(name = "semesterId", required = false) Long semesterId,
+            @RequestParam(name = "required", defaultValue = "75.0") double requiredAttendance,
+            Principal principal) {
+        Long targetSemesterId = resolveSemesterId(semesterId, principal);
+        List<SubjectStatsDTO> list = subjectService.getAllSubjectStats(targetSemesterId, requiredAttendance);
         return ResponseEntity.ok(list);
     }
 
@@ -43,14 +66,16 @@ public class SubjectController {
     }
 
     /**
-     * POST /api/subjects?semesterId=1
+     * POST /api/subjects
      */
     @PostMapping
     public ResponseEntity<Subject> createSubject(
-            @RequestParam(name = "semesterId", defaultValue = "1") Long semesterId,
-            @RequestBody CreateSubjectRequestDTO request) {
+            @RequestParam(name = "semesterId", required = false) Long semesterId,
+            @RequestBody CreateSubjectRequestDTO request,
+            Principal principal) {
+        Long targetSemesterId = resolveSemesterId(semesterId, principal);
         Subject subject = request.toSubject();
-        Subject created = subjectService.createSubject(semesterId, subject, request.getInitialTotal(), request.getInitialAttended());
+        Subject created = subjectService.createSubject(targetSemesterId, subject, request.getInitialTotal(), request.getInitialAttended());
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
