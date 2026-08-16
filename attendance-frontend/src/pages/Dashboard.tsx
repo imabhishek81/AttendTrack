@@ -8,7 +8,10 @@ import {
 } from '../utils/attendance';
 import CircularProgress from '../components/CircularProgress';
 import StatusBadge from '../components/StatusBadge';
-import { MapPin, Clock, AlertTriangle, TrendingUp, BookOpen, ChevronRight, Sparkles, Zap, Database } from 'lucide-react';
+import { 
+  MapPin, Clock, AlertTriangle, TrendingUp, BookOpen, ChevronRight, 
+  Sparkles, Zap, Database, Lock, Unlock, ShieldCheck, CheckCircle2 
+} from 'lucide-react';
 import type { DayOfWeek } from '../types';
 import { api, ApiDashboardData } from '../api/apiClient';
 
@@ -33,9 +36,39 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const today = getTodayISO();
   const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek;
-
   const [liveData, setLiveData] = useState<ApiDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    return localStorage.getItem(`attendtrack_locked_${today}`) === 'true';
+  });
+  const [isLocking, setIsLocking] = useState(false);
+  const [lockSuccessMessage, setLockSuccessMessage] = useState(false);
+
+  // Lock and submit all today's attendance to DB
+  const handleLockAttendance = async () => {
+    setIsLocking(true);
+    try {
+      // Commit all marked classes to backend API
+      for (const item of todaysClasses) {
+        if (item.record?.status) {
+          await api.markAttendance(Number(item.subject.id), today, item.record.status);
+        }
+      }
+      setIsLocked(true);
+      localStorage.setItem(`attendtrack_locked_${today}`, 'true');
+      setLockSuccessMessage(true);
+      setTimeout(() => setLockSuccessMessage(false), 4000);
+    } catch (err) {
+      console.error('Failed to lock attendance:', err);
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
+  const handleUnlockAttendance = () => {
+    setIsLocked(false);
+    localStorage.removeItem(`attendtrack_locked_${today}`);
+  };
 
   // Fetch live dashboard data from Spring Boot REST API
   useEffect(() => {
@@ -339,14 +372,20 @@ export default function Dashboard() {
                   {/* Action buttons */}
                   <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t border-white/[0.04] sm:border-t-0">
                     <button
-                      className={`btn-present flex-1 sm:flex-initial text-xs sm:text-sm py-2.5 sm:py-2 text-center justify-center font-semibold ${record?.status === 'PRESENT' ? 'marked' : ''}`}
-                      onClick={() => markAttendance(subject.id, today, 'PRESENT')}
+                      disabled={isLocked}
+                      className={`btn-present flex-1 sm:flex-initial text-xs sm:text-sm py-2.5 sm:py-2 text-center justify-center font-semibold transition-all ${
+                        record?.status === 'PRESENT' ? 'marked ring-2 ring-emerald-400/30' : ''
+                      } ${isLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      onClick={() => !isLocked && markAttendance(subject.id, today, 'PRESENT')}
                     >
                       {record?.status === 'PRESENT' ? '✓ Present' : 'Present'}
                     </button>
                     <button
-                      className={`btn-absent flex-1 sm:flex-initial text-xs sm:text-sm py-2.5 sm:py-2 text-center justify-center font-semibold ${record?.status === 'ABSENT' ? 'marked' : ''}`}
-                      onClick={() => markAttendance(subject.id, today, 'ABSENT')}
+                      disabled={isLocked}
+                      className={`btn-absent flex-1 sm:flex-initial text-xs sm:text-sm py-2.5 sm:py-2 text-center justify-center font-semibold transition-all ${
+                        record?.status === 'ABSENT' ? 'marked ring-2 ring-red-400/30' : ''
+                      } ${isLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      onClick={() => !isLocked && markAttendance(subject.id, today, 'ABSENT')}
                     >
                       {record?.status === 'ABSENT' ? '✗ Absent' : 'Absent'}
                     </button>
@@ -354,6 +393,65 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+
+            {/* ─── Final Submit & Lock Footer Bar ─── */}
+            <div className="mt-4 pt-2">
+              {isLocked ? (
+                <div className="glass-card p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                  <div className="flex items-center gap-2.5 text-emerald-400">
+                    <ShieldCheck className="w-5 h-5 shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-bold text-white">Today's Attendance Locked & Submitted</h4>
+                      <p className="text-xs text-emerald-300/80">All records are locked and permanently committed to the database.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUnlockAttendance}
+                    className="btn-outline text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 text-surface-400 hover:text-white shrink-0 self-end sm:self-auto"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Unlock to Edit</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="glass-card p-4 border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-surface-900/60 to-purple-950/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <Lock className="w-4 h-4 text-indigo-400" />
+                      Lock & Finalize Today's Attendance
+                    </h4>
+                    <p className="text-xs text-surface-400 mt-0.5">
+                      {todaysClasses.filter(c => c.record).length === todaysClasses.length
+                        ? 'All classes marked! Click to lock and commit to database.'
+                        : `Marked ${todaysClasses.filter(c => c.record).length} of ${todaysClasses.length} classes today.`
+                      }
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLockAttendance}
+                    disabled={isLocking || todaysClasses.filter(c => c.record).length === 0}
+                    className="btn-primary text-xs sm:text-sm py-2.5 px-5 font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    {isLocking ? (
+                      <span>Saving to DB...</span>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Lock & Final Submit</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Lock Success Toast */}
+              {lockSuccessMessage && (
+                <div className="mt-3 p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-center gap-2 animate-slide-up">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>Success! Today's attendance is locked and committed to MySQL database.</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
