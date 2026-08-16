@@ -67,7 +67,7 @@ public class DashboardService {
         }
 
         double overallPercentage = calculationService.calculatePercentage(totalPresent, totalClasses);
-        String overallStatus = calculationService.getStatus(overallPercentage, requiredAttendance);
+        String overallStatus = totalClasses == 0 ? "SAFE" : calculationService.getStatus(overallPercentage, requiredAttendance);
 
         // 2. Get Today's classes
         LocalDate today = LocalDate.now();

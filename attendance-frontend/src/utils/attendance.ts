@@ -29,7 +29,7 @@ import { SafetyStatus } from '../types';
  *   }
  */
 export function calculatePercentage(present: number, total: number): number {
-  if (total === 0) return 100;
+  if (total === 0) return 0;
   return (present / total) * 100;
 }
 

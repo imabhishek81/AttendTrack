@@ -22,7 +22,7 @@ public class AttendanceCalculationService {
      * Calculate attendance percentage: (present / total) * 100
      */
     public double calculatePercentage(long present, long total) {
-        if (total <= 0) return 100.0;
+        if (total <= 0) return 0.0;
         double pct = ((double) present / total) * 100.0;
         return Math.round(pct * 10.0) / 10.0; // 1 decimal place
     }

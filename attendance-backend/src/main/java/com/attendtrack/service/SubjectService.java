@@ -54,7 +54,7 @@ public class SubjectService {
         long absent = total - present;
 
         double percentage = calculationService.calculatePercentage(present, total);
-        String status = calculationService.getStatus(percentage, requiredAttendance);
+        String status = total == 0 ? "SAFE" : calculationService.getStatus(percentage, requiredAttendance);
         int canMiss = calculationService.calculateCanMiss(present, total, requiredAttendance);
         int requiredToReach = calculationService.calculateRequiredToReach(present, total, requiredAttendance);
 
