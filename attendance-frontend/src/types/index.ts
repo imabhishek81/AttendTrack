@@ -8,7 +8,7 @@
 // ==========================================
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'CANCELLED';
-export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 export type SafetyStatus = 'SAFE' | 'WARNING' | 'DANGER';
 
 // Maps to: @Entity public class User

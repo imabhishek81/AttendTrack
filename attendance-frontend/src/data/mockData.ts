@@ -134,6 +134,7 @@ function generateAttendanceRecords(): AttendanceRecord[] {
   const dayIndexMap: Record<DayOfWeek, number> = {
     'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
     'Thursday': 4, 'Friday': 5, 'Saturday': 6,
+    'Sunday': 0,
   };
   
   // Per-subject absence rates (to create varied percentages)

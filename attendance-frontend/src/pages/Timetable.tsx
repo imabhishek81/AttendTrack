@@ -5,14 +5,14 @@ import type { DayOfWeek } from '../types';
 import { api, ApiTimetableEntry, ApiSubjectStats } from '../api/apiClient';
 import { useAppContext } from '../App';
 
-const days: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const days: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function Timetable() {
   const { refreshTrigger, triggerRefresh } = useAppContext();
-  const todayIndex = Math.min(new Date().getDay() - 1, 5);
+  const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek;
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(
-    todayIndex >= 0 ? days[todayIndex] : days[0]
+    days.includes(currentDayName) ? currentDayName : days[0]
   );
   const [liveTimetable, setLiveTimetable] = useState<ApiTimetableEntry[] | null>(null);
   const [availableSubjects, setAvailableSubjects] = useState<ApiSubjectStats[]>([]);
