@@ -87,11 +87,14 @@ export default function Timetable() {
   const handleDeleteSlot = async (id: number) => {
     if (!confirm('Are you sure you want to remove this class from your timetable?')) return;
     try {
+      // Instant optimistic UI update
+      setLiveTimetable(prev => prev ? prev.filter(t => t.id !== id) : []);
       await api.deleteTimetableEntry(id);
       triggerRefresh();
       fetchTimetable();
     } catch (err) {
       console.error('Failed to delete timetable entry:', err);
+      fetchTimetable();
     }
   };
 

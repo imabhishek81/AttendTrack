@@ -115,11 +115,14 @@ export default function AttendancePage() {
     if (!confirm(`Are you sure you want to delete "${name}"? All associated timetable entries will also be removed.`)) return;
 
     try {
+      // Instant optimistic UI update
+      setLiveSubjects(prev => prev ? prev.filter(s => s.subject.id !== id) : []);
       await api.deleteSubject(id);
       triggerRefresh();
       loadSubjects();
     } catch (err) {
       console.error('Failed to delete subject:', err);
+      loadSubjects();
     }
   };
 
