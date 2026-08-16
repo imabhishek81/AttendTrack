@@ -138,7 +138,7 @@ export default function AttendancePage() {
   };
 
   const subjectStats = useMemo(() => {
-    if (liveSubjects && liveSubjects.length > 0) {
+    if (liveSubjects) {
       return liveSubjects.map(s => ({
         subject: {
           id: String(s.subject.id),
@@ -160,22 +160,8 @@ export default function AttendancePage() {
       })).sort((a, b) => a.percentage - b.percentage);
     }
 
-    return mockSubjects.map(subject => {
-      const records = attendanceRecords.filter(r => r.subjectId === subject.id);
-      const present = records.filter(r => r.status === 'PRESENT').length;
-      const absent = records.filter(r => r.status === 'ABSENT').length;
-      const total = records.length;
-      const percentage = calculatePercentage(present, total);
-      const status = getStatus(percentage, requiredAttendance);
-      const missable = canMiss(present, total, requiredAttendance);
-      const needed = requiredToReach(present, total, requiredAttendance);
-      return { 
-        subject: { ...subject, numericId: Number(subject.id) }, 
-        rawSubject: null as ApiSubjectStats | null,
-        present, absent, total, percentage, status, missable, needed 
-      };
-    }).sort((a, b) => a.percentage - b.percentage);
-  }, [liveSubjects, attendanceRecords, requiredAttendance]);
+    return [];
+  }, [liveSubjects]);
 
   const overallStats = useMemo(() => {
     const totalPresent = subjectStats.reduce((sum, s) => sum + s.present, 0);
@@ -404,25 +390,26 @@ export default function AttendancePage() {
                   </span>
                 </div>
 
-                {/* Action buttons (Edit & Delete) */}
-                {rawSubject && (
-                  <div className="flex items-center gap-1 ml-1" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => openEditModal(rawSubject, e)}
-                      className="p-1.5 rounded-lg text-surface-500 hover:text-white hover:bg-surface-700/50 transition-colors"
-                      title="Edit Subject"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteSubject(subject.numericId, subject.name, e)}
-                      className="p-1.5 rounded-lg text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Delete Subject"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
+                {/* Action buttons (Edit & Delete) - Always visible */}
+                <div className="flex items-center gap-1.5 ml-1" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => openEditModal(rawSubject || {
+                      subject: { id: subject.numericId, name: subject.name, code: subject.code, teacher: subject.teacher, color: subject.color },
+                      present, absent, total, percentage, status, canMiss: missable, requiredToReach: needed,
+                    }, e)}
+                    className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-700/60 transition-all active:scale-95"
+                    title="Edit Subject"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteSubject(subject.numericId, subject.name, e)}
+                    className="p-1.5 rounded-lg text-surface-400 hover:text-rose-400 hover:bg-rose-500/15 transition-all active:scale-95"
+                    title="Delete Subject"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
 
                 <ChevronRight className="w-4 h-4 text-surface-600 group-hover:text-white group-hover:translate-x-0.5 transition-all hidden sm:block" />
               </div>

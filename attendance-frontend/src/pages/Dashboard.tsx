@@ -10,7 +10,7 @@ import CircularProgress from '../components/CircularProgress';
 import StatusBadge from '../components/StatusBadge';
 import { 
   MapPin, Clock, AlertTriangle, TrendingUp, BookOpen, ChevronRight, 
-  Sparkles, Zap, Database, Lock, Unlock, ShieldCheck, CheckCircle2 
+  Sparkles, Zap, Database, Lock, Unlock, ShieldCheck, CheckCircle2, Plus 
 } from 'lucide-react';
 import type { DayOfWeek } from '../types';
 import { api, ApiDashboardData } from '../api/apiClient';
@@ -128,7 +128,7 @@ export default function Dashboard() {
   }, [liveData, attendanceRecords, requiredAttendance]);
 
   const subjectStats = useMemo(() => {
-    if (liveData && liveData.subjectSummaries.length > 0) {
+    if (liveData) {
       return liveData.subjectSummaries.map(s => ({
         subject: {
           id: String(s.subject.id),
@@ -146,19 +146,11 @@ export default function Dashboard() {
       }));
     }
 
-    return mockSubjects.map(subject => {
-      const records = attendanceRecords.filter(r => r.subjectId === subject.id);
-      const present = records.filter(r => r.status === 'PRESENT').length;
-      const total = records.length;
-      const percentage = calculatePercentage(present, total);
-      const status = getStatus(percentage, requiredAttendance);
-      const missable = canMiss(present, total, requiredAttendance);
-      return { subject, present, total, percentage, status, missable };
-    });
-  }, [liveData, attendanceRecords, requiredAttendance]);
+    return [];
+  }, [liveData]);
 
   const todaysClasses = useMemo(() => {
-    if (liveData && liveData.todaysClasses.length > 0) {
+    if (liveData) {
       return liveData.todaysClasses.map(item => ({
         entry: {
           id: String(item.timetableEntry.id),
@@ -185,17 +177,8 @@ export default function Dashboard() {
       }));
     }
 
-    return mockTimetable
-      .filter(t => t.day === todayDayName)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-      .map(entry => {
-        const subject = mockSubjects.find(s => s.id === entry.subjectId)!;
-        const record = attendanceRecords.find(
-          r => r.subjectId === entry.subjectId && r.date === today
-        );
-        return { entry, subject, record };
-      });
-  }, [liveData, todayDayName, attendanceRecords, today]);
+    return [];
+  }, [liveData]);
 
   // Animated values
   const animatedPercentage = useAnimatedNumber(overallStats.percentage, 1200);
@@ -501,72 +484,89 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {subjectStats.map(({ subject, percentage, status, present, total, missable }, index) => (
-            <div
-              key={subject.id}
-              className="glass-card-hover p-4 cursor-pointer animate-slide-up relative overflow-hidden group"
-              style={{ animationDelay: `${index * 0.06}s` }}
-              onClick={() => navigate(`/subject/${subject.id}`)}
+        {subjectStats.length === 0 ? (
+          <div className="glass-card p-8 text-center animate-fade-in">
+            <BookOpen className="w-10 h-10 text-indigo-400/60 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white mb-1">No subjects yet</h3>
+            <p className="text-xs text-surface-400 mb-4 max-w-sm mx-auto">
+              You haven't added any subjects to this semester yet. Add your subjects to start tracking attendance!
+            </p>
+            <button
+              onClick={() => navigate('/attendance')}
+              className="btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 font-semibold"
             >
-              {/* Subtle color tint on hover */}
+              <Plus className="w-4 h-4" />
+              <span>Add Your First Subject</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {subjectStats.map(({ subject, percentage, status, present, total, missable }, index) => (
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ background: `radial-gradient(circle at 50% 0%, ${subject.color}08, transparent 70%)` }}
-              />
+                key={subject.id}
+                className="glass-card-hover p-4 cursor-pointer animate-slide-up relative overflow-hidden group"
+                style={{ animationDelay: `${index * 0.06}s` }}
+                onClick={() => navigate(`/subject/${subject.id}`)}
+              >
+                {/* Subtle color tint on hover */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: `radial-gradient(circle at 50% 0%, ${subject.color}08, transparent 70%)` }}
+                />
 
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
-                      style={{ backgroundColor: subject.color + '18', color: subject.color }}
-                    >
-                      {subject.code.slice(0, 2)}
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: subject.color + '18', color: subject.color }}
+                      >
+                        {subject.code.slice(0, 2)}
+                      </div>
+                      <span className="font-semibold text-white text-sm">{subject.code}</span>
                     </div>
-                    <span className="font-semibold text-white text-sm">{subject.code}</span>
+                    <StatusBadge status={status} size="sm" />
                   </div>
-                  <StatusBadge status={status} size="sm" />
-                </div>
 
-                <div className="flex items-end justify-between mb-3">
-                  <div>
-                    <span className="text-2xl font-bold text-white">{percentage.toFixed(1)}</span>
-                    <span className="text-sm text-surface-500 ml-0.5">%</span>
+                  <div className="flex items-end justify-between mb-3">
+                    <div>
+                      <span className="text-2xl font-bold text-white">{percentage.toFixed(1)}</span>
+                      <span className="text-sm text-surface-500 ml-0.5">%</span>
+                    </div>
+                    <span className="text-xs text-surface-600">{present}/{total}</span>
                   </div>
-                  <span className="text-xs text-surface-600">{present}/{total}</span>
-                </div>
 
-                <div className="progress-bar-container h-1.5 mb-3">
-                  <div
-                    className={`progress-bar-fill h-1.5 ${
-                      percentage >= requiredAttendance + 5 ? 'bg-emerald-500' :
-                      percentage >= requiredAttendance ? 'bg-amber-500' : 'bg-red-500'
-                    }`}
-                    style={{ '--progress-width': `${Math.min(percentage, 100)}%` } as React.CSSProperties}
-                  />
-                </div>
+                  <div className="progress-bar-container h-1.5 mb-3">
+                    <div
+                      className={`progress-bar-fill h-1.5 ${
+                        percentage >= requiredAttendance + 5 ? 'bg-emerald-500' :
+                        percentage >= requiredAttendance ? 'bg-amber-500' : 'bg-red-500'
+                      }`}
+                      style={{ '--progress-width': `${Math.min(percentage, 100)}%` } as React.CSSProperties}
+                    />
+                  </div>
 
-                <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
-                  {total === 0 ? (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-800 text-surface-400 border border-surface-700/50">
-                      ✨ No classes yet
-                    </span>
-                  ) : missable > 0 ? (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <span>🛡️</span> Can miss {missable} {missable === 1 ? 'class' : 'classes'}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                      <span>⚡</span> Don't miss next class
-                    </span>
-                  )}
-                  <ChevronRight className="w-3.5 h-3.5 text-surface-600 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
+                  <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
+                    {total === 0 ? (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-800 text-surface-400 border border-surface-700/50">
+                        ✨ No classes yet
+                      </span>
+                    ) : missable > 0 ? (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                        <span>🛡️</span> Can miss {missable} {missable === 1 ? 'class' : 'classes'}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                        <span>⚡</span> Don't miss next class
+                      </span>
+                    )}
+                    <ChevronRight className="w-3.5 h-3.5 text-surface-600 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
