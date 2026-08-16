@@ -19,12 +19,17 @@ const navItems = [
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, backendConnected } = useAppContext();
+  const { user } = useAppContext();
 
   return (
-    <div className="min-h-screen flex bg-surface-950">
+    <div className="min-h-screen flex bg-surface-950 relative overflow-hidden">
+      {/* Ambient background glows for rich aesthetic */}
+      <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="fixed top-[40%] right-[10%] w-[350px] h-[350px] bg-cyan-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+
       {/* ─── Desktop Sidebar ─────────────── */}
-      <aside className="hidden lg:flex flex-col w-[260px] bg-surface-900/30 border-r border-white/[0.04] p-5 sticky top-0 h-screen">
+      <aside className="hidden lg:flex flex-col w-[260px] bg-surface-900/30 backdrop-blur-2xl border-r border-white/[0.05] p-5 sticky top-0 h-screen z-30">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 px-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="relative">

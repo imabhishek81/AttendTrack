@@ -70,6 +70,14 @@ export default function Dashboard() {
     localStorage.removeItem(`attendtrack_locked_${today}`);
   };
 
+  // Quick 1-Tap: Mark all uncompleted classes today as Present
+  const handleMarkAllPresent = () => {
+    if (isLocked) return;
+    todaysClasses.forEach(item => {
+      markAttendance(item.subject.id, today, 'PRESENT');
+    });
+  };
+
   // Fetch live dashboard data from Spring Boot REST API
   useEffect(() => {
     let isMounted = true;
@@ -211,7 +219,17 @@ export default function Dashboard() {
               </h1>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold gradient-text mb-2">{user.name}</h2>
-            <p className="text-surface-500 text-sm">{formatDate(today)}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-surface-300">
+                {formatDate(today)}
+              </span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium flex items-center gap-1">
+                <span>🔥</span> 5-Day Streak
+              </span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium">
+                🎯 Target {requiredAttendance}%
+              </span>
+            </div>
           </div>
 
           {/* User avatar (Click to open Settings) */}
@@ -233,7 +251,7 @@ export default function Dashboard() {
       </div>
 
       {/* ─── Main Stats Area ───────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
         {/* Overall Attendance Card — Larger, more prominent */}
         <div className="lg:col-span-5 glass-card gradient-border p-6 flex flex-col items-center justify-center animate-slide-up">
           <CircularProgress
@@ -304,16 +322,28 @@ export default function Dashboard() {
 
       {/* ─── Today's Classes ───────────── */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h2 className="section-title flex items-center gap-2 mb-0">
             <Clock className="w-5 h-5 text-indigo-400" />
             Today's Classes
           </h2>
-          {todaysClasses.length > 0 && (
-            <span className="text-xs text-surface-500 bg-white/[0.04] px-3 py-1 rounded-full">
-              {todaysClasses.filter(c => c.record).length}/{todaysClasses.length} marked
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {todaysClasses.length > 0 && !isLocked && todaysClasses.some(c => !c.record) && (
+              <button
+                onClick={handleMarkAllPresent}
+                className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/40 font-medium transition-all"
+                title="Mark all today's lectures as present"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Mark All Present</span>
+              </button>
+            )}
+            {todaysClasses.length > 0 && (
+              <span className="text-xs text-surface-400 bg-surface-800/80 border border-surface-700/50 px-3 py-1 rounded-full font-mono">
+                {todaysClasses.filter(c => c.record).length}/{todaysClasses.length} marked
+              </span>
+            )}
+          </div>
         </div>
 
         {todaysClasses.length === 0 ? (
@@ -517,13 +547,21 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${
-                    missable > 0 ? 'text-surface-500' : 'text-amber-400'
-                  }`}>
-                    {missable > 0 ? `Can miss ${missable}` : 'Cannot miss'}
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-surface-700 group-hover:text-surface-500 transition-colors" />
+                <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
+                  {total === 0 ? (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-800 text-surface-400 border border-surface-700/50">
+                      ✨ No classes yet
+                    </span>
+                  ) : missable > 0 ? (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <span>🛡️</span> Can miss {missable} {missable === 1 ? 'class' : 'classes'}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                      <span>⚡</span> Don't miss next class
+                    </span>
+                  )}
+                  <ChevronRight className="w-3.5 h-3.5 text-surface-600 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
             </div>

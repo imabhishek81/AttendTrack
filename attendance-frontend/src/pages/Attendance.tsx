@@ -7,7 +7,8 @@ import StatusBadge from '../components/StatusBadge';
 import CircularProgress from '../components/CircularProgress';
 import { 
   ChevronRight, TrendingUp, TrendingDown, Minus, ArrowUpRight, 
-  Plus, Edit3, Trash2, X, BookOpen, Sparkles, Check 
+  Plus, Edit3, Trash2, X, BookOpen, Sparkles, Check, Search, Filter,
+  Shield, AlertTriangle
 } from 'lucide-react';
 import { api, ApiSubjectStats } from '../api/apiClient';
 
@@ -36,6 +37,8 @@ export default function AttendancePage() {
   const [subjectColor, setSubjectColor] = useState(PRESET_COLORS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'SAFE' | 'WARNING' | 'DANGER'>('ALL');
 
   const loadSubjects = useCallback(async () => {
     try {
@@ -174,6 +177,24 @@ export default function AttendancePage() {
     return { totalPresent, totalClasses, percentage, status };
   }, [subjectStats, requiredAttendance]);
 
+  const safeCount = subjectStats.filter(s => s.status === 'SAFE').length;
+  const warningCount = subjectStats.filter(s => s.status === 'WARNING').length;
+  const dangerCount = subjectStats.filter(s => s.status === 'DANGER').length;
+
+  const filteredSubjects = useMemo(() => {
+    return subjectStats.filter(s => {
+      const matchesSearch = 
+        s.subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.subject.teacher.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = 
+        statusFilter === 'ALL' ? true : s.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [subjectStats, searchQuery, statusFilter]);
+
   return (
     <div className="page-container">
       {/* ─── Header + Add Subject Button ─── */}
@@ -192,7 +213,7 @@ export default function AttendancePage() {
       </div>
 
       {/* ─── Overall Card ──────────────── */}
-      <div className="glass-card gradient-border p-6 mb-8 animate-slide-up">
+      <div className="glass-card gradient-border p-6 mb-6 animate-slide-up">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <CircularProgress
             percentage={overallStats.percentage}
@@ -215,14 +236,102 @@ export default function AttendancePage() {
         </div>
       </div>
 
+      {/* ─── Search & Status Filters ───── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search subjects or teachers..."
+            className="w-full bg-surface-900/60 border border-surface-700/60 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-surface-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/40 transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Status Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
+              statusFilter === 'ALL'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                : 'bg-surface-900/40 text-surface-400 border border-surface-800 hover:text-white'
+            }`}
+          >
+            All ({subjectStats.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('SAFE')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1 ${
+              statusFilter === 'SAFE'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'bg-surface-900/40 text-surface-400 border border-surface-800 hover:text-white'
+            }`}
+          >
+            <span>🟢 Safe</span> ({safeCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('WARNING')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1 ${
+              statusFilter === 'WARNING'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                : 'bg-surface-900/40 text-surface-400 border border-surface-800 hover:text-white'
+            }`}
+          >
+            <span>🟡 Warning</span> ({warningCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('DANGER')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1 ${
+              statusFilter === 'DANGER'
+                ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                : 'bg-surface-900/40 text-surface-400 border border-surface-800 hover:text-white'
+            }`}
+          >
+            <span>🔴 Danger</span> ({dangerCount})
+          </button>
+        </div>
+      </div>
+
       {/* ─── Subject List ──────────────── */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="section-title mb-0">All Subjects ({subjectStats.length})</h2>
+        <h2 className="section-title mb-0">
+          Subjects ({filteredSubjects.length})
+        </h2>
         <span className="text-xs text-surface-500">Sorted by lowest attendance</span>
       </div>
 
-      <div className="space-y-3">
-        {subjectStats.map(({ subject, present, absent, total, percentage, status, missable, needed, rawSubject }, index) => (
+      {filteredSubjects.length === 0 ? (
+        <div className="glass-card p-10 text-center animate-fade-in">
+          <BookOpen className="w-10 h-10 text-surface-600 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-white mb-1">No subjects found</h3>
+          <p className="text-xs text-surface-500 mb-4">
+            {searchQuery || statusFilter !== 'ALL'
+              ? 'No subjects match your current search or filter criteria.'
+              : 'Add your first subject to start tracking!'}
+          </p>
+          {(searchQuery || statusFilter !== 'ALL') && (
+            <button
+              onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); }}
+              className="btn-outline text-xs py-1.5 px-3 text-indigo-400 hover:text-indigo-300"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredSubjects.map(({ subject, present, absent, total, percentage, status, missable, needed, rawSubject }, index) => (
           <div
             key={subject.id}
             onClick={() => navigate(`/subject/${subject.id}`)}
@@ -313,6 +422,7 @@ export default function AttendancePage() {
           </div>
         ))}
       </div>
+    )}
 
       {/* ─── Add / Edit Subject Modal ────── */}
       {isSubjectModalOpen && (

@@ -1,14 +1,14 @@
 /* ==========================================
-   Attendance Tracker — Global Styles v2
+   AttendTrack — Vercel & Anthropic Design System
    ==========================================
-   Premium dark theme with:
-   - Animated mesh gradient backgrounds
-   - Enhanced glassmorphism
-   - Micro-animations & transitions
-   - Glow effects
+   Principles:
+   - Obsidian Dark Theme (#08090E, #0E1017, #151824)
+   - Fine Specular Glass Highlights (border-white/[0.08])
+   - Targeted Electric Neon Accents (Indigo/Violet/Emerald/Cyan)
+   - Spring Micro-Interactions & Tactile Haptic-like feedback
    ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,14 +16,21 @@
 
 /* ─── Base Styles ──────────────────────── */
 @layer base {
+  :root {
+    --color-obsidian: #08090e;
+    --color-surface-card: rgba(16, 18, 28, 0.7);
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   body {
-    @apply bg-surface-950 text-white font-sans antialiased;
+    @apply bg-[#08090e] text-white font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200;
     overflow-x: hidden;
+    letter-spacing: -0.011em;
   }
 
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -31,36 +38,33 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-surface-700/50 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-surface-600;
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
   }
 }
 
-/* ─── Component Styles ─────────────────── */
+/* ─── Vercel & Anthropic Component Styles ─── */
 @layer components {
-  /* Glass Card - Enhanced with subtle inner glow */
+  /* Glass Card - Vercel Obsidian */
   .glass-card {
-    @apply bg-surface-800/40 backdrop-blur-xl border border-surface-700/50 rounded-2xl;
+    @apply bg-[#0e111a]/70 backdrop-blur-2xl border border-white/[0.08] rounded-2xl;
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.02),
-      0 4px 24px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 8px 32px -4px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300 ease-out;
+    @apply glass-card transition-all duration-300;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-card-hover:hover {
-    @apply border-surface-600/60;
+    @apply border-white/20 bg-[#121624]/80;
     transform: translateY(-2px);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      0 12px 40px rgba(0, 0, 0, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 16px 48px -8px rgba(99, 102, 241, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   /* Glowing accent card */
@@ -75,7 +79,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6), transparent);
   }
 
   /* Gradient Accent Border */

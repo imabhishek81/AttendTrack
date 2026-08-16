@@ -239,6 +239,69 @@ export default function Analytics() {
         </div>
       </div>
 
+      {/* ─── What-If Projection Simulator ─── */}
+      <div className="glass-card gradient-border p-6 mb-6 animate-slide-up">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-white">Interactive Attendance Simulator</h2>
+              <p className="text-xs text-surface-400">Project your future percentage before taking leave</p>
+            </div>
+          </div>
+          <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-surface-800 text-indigo-300 border border-indigo-500/20">
+            Target: {requiredAttendance}%
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {/* Attend Scenario */}
+          <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <span>📈</span> If you attend upcoming classes:
+            </h3>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {[1, 3, 5, 10].map(n => {
+                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0) || attendanceRecords.filter(r => r.status === 'PRESENT').length;
+                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0) || attendanceRecords.length;
+                const projected = totalC + n > 0 ? ((totalP + n) / (totalC + n)) * 100 : 0;
+                return (
+                  <div key={n} className="p-2.5 rounded-lg bg-surface-900/60 border border-emerald-500/10">
+                    <span className="text-[10px] text-surface-400 block font-medium">+{n} classes</span>
+                    <span className="text-sm font-bold text-emerald-300">{projected.toFixed(1)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Miss Scenario */}
+          <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/20">
+            <h3 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <span>📉</span> If you miss upcoming classes:
+            </h3>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {[1, 2, 3, 5].map(n => {
+                const totalP = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.present, 0) : 0) || attendanceRecords.filter(r => r.status === 'PRESENT').length;
+                const totalC = (liveSubjects ? liveSubjects.reduce((s, x) => s + x.total, 0) : 0) || attendanceRecords.length;
+                const projected = totalC + n > 0 ? (totalP / (totalC + n)) * 100 : 0;
+                const isSafe = projected >= requiredAttendance;
+                return (
+                  <div key={n} className="p-2.5 rounded-lg bg-surface-900/60 border border-rose-500/10">
+                    <span className="text-[10px] text-surface-400 block font-medium">Miss {n}</span>
+                    <span className={`text-sm font-bold ${isSafe ? 'text-amber-300' : 'text-rose-400'}`}>
+                      {projected.toFixed(1)}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ─── Monthly Breakdown Table ──── */}
       <div className="glass-card p-6 animate-slide-up stagger-3">
         <div className="flex items-center gap-2 mb-5">
