@@ -30,7 +30,7 @@ public class User {
     private String email;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Column(length = 255)
