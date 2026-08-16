@@ -9,7 +9,7 @@
 
 const PUBLIC_BACKEND_TUNNEL = 'https://dull-grapes-see.loca.lt/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
+const API_BASE_URL = ((import.meta as any)?.env?.VITE_API_URL) || 
   (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')
     ? PUBLIC_BACKEND_TUNNEL
     : (typeof window !== 'undefined' && window.location.hostname
