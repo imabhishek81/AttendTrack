@@ -6,7 +6,7 @@ services:
     dockerfilePath: ./attendance-backend/Dockerfile
     dockerContext: ./attendance-backend
     plan: free
-    healthCheckPath: /api/dashboard
+    healthCheckPath: /api/health
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
