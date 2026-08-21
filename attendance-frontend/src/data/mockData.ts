@@ -20,14 +20,21 @@
 
 import { 
   User, Semester, Subject, TimetableEntry, 
-  AttendanceRecord, DayOfWeek 
+  AttendanceRecord, DayOfWeek, SafetyStatus
 } from '../types';
+import { calculatePercentage, getStatus, canMiss, requiredToReach } from '../utils/attendance';
+
+export const DEMO_ACCOUNT = {
+  name: 'Abhishek',
+  email: 'abhishek@example.com',
+  password: 'password123',
+} as const;
 
 // ─── User ────────────────────────────────
 export const mockUser: User = {
   id: '1',
-  name: 'Abhishek',
-  email: 'abhishek@example.com',
+  name: DEMO_ACCOUNT.name,
+  email: DEMO_ACCOUNT.email,
 };
 
 // ─── Semester ────────────────────────────
@@ -207,4 +214,38 @@ export function getSubjectStats(subjectId: string) {
   const absent = records.filter(r => r.status === 'ABSENT').length;
   const total = records.length;
   return { present, absent, total };
+}
+
+export interface DemoSubjectSummary {
+  subject: Subject;
+  present: number;
+  absent: number;
+  total: number;
+  percentage: number;
+  status: SafetyStatus;
+  canMiss: number;
+  requiredToReach: number;
+}
+
+export function getDemoSubjectSummaries(
+  records: AttendanceRecord[],
+  required: number
+): DemoSubjectSummary[] {
+  return mockSubjects.map(subject => {
+    const recs = records.filter(r => r.subjectId === subject.id);
+    const present = recs.filter(r => r.status === 'PRESENT').length;
+    const absent = recs.filter(r => r.status === 'ABSENT').length;
+    const total = recs.length;
+    const percentage = calculatePercentage(present, total);
+    return {
+      subject,
+      present,
+      absent,
+      total,
+      percentage,
+      status: getStatus(percentage, required),
+      canMiss: canMiss(present, total, required),
+      requiredToReach: requiredToReach(present, total, required),
+    };
+  });
 }

@@ -153,8 +153,35 @@ export function setStoredToken(token: string | null) {
   }
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = getStoredToken();
+export const API_URL = API_BASE_URL;
+
+export async function checkBackendHealth(): Promise<{ online: boolean; url: string; latency?: number }> {
+  const start = Date.now();
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      headers: { 'bypass-tunnel-reminder': 'true' },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      return { online: true, url: API_BASE_URL, latency: Date.now() - start };
+    }
+    return { online: false, url: API_BASE_URL };
+  } catch {
+    return { online: false, url: API_BASE_URL };
+  }
+}
+
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  timeoutMs = 10000,
+  skipAuth = false
+): Promise<T> {
+  const token = skipAuth ? null : getStoredToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'bypass-tunnel-reminder': 'true',
@@ -165,24 +192,40 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = errorText;
-    try {
-      const parsed = JSON.parse(errorText);
-      errorMessage = parsed.message || parsed.error || errorText;
-    } catch {
-      // not JSON
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText;
+      try {
+        const parsed = JSON.parse(errorText);
+        errorMessage = parsed.message || parsed.error || errorText;
+      } catch {
+        // not JSON
+      }
+      throw new Error(errorMessage || `HTTP ${response.status}: ${response.statusText}`);
     }
-    throw new Error(errorMessage || `HTTP ${response.status}: ${response.statusText}`);
-  }
 
-  return response.json();
+    return response.json();
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Connection timed out (${timeoutMs / 1000}s). The server at ${API_BASE_URL} took too long to respond.`);
+    }
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error(`Cannot connect to Spring Boot backend at ${API_BASE_URL}. Ensure the backend is running.`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const api = {
@@ -191,7 +234,7 @@ export const api = {
     const data = await request<ApiAuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    });
+    }, 12000, true);
     setStoredToken(data.token);
     return data;
   },
@@ -200,13 +243,13 @@ export const api = {
     const data = await request<ApiAuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
-    });
+    }, 12000, true);
     setStoredToken(data.token);
     return data;
   },
 
   async getMe(): Promise<ApiUser> {
-    return request<ApiUser>('/auth/me');
+    return request<ApiUser>('/auth/me', {}, 5000);
   },
 
   logout() {
